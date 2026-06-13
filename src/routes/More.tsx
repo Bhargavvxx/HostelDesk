@@ -4,7 +4,9 @@ import {
   BedDouble,
   Download,
   ChevronRight,
+  Lock,
 } from "lucide-react"
+import { useAuthStore } from "@/hooks/useAuthStore"
 import { cn } from "@/lib/utils"
 
 const menuItems = [
@@ -59,6 +61,23 @@ export default function More() {
             <ChevronRight className="size-4 text-muted-foreground" />
           </Link>
         ))}
+        <button
+          onClick={() => useAuthStore.getState().setUnlocked(false)}
+          className={cn(
+            "flex w-full min-h-[56px] items-center gap-4 rounded-xl px-4 py-3",
+            "text-foreground transition-colors duration-150",
+            "hover:bg-muted active:scale-[0.98]"
+          )}
+        >
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Lock className="size-5" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-medium">Lock App</p>
+            <p className="text-xs text-muted-foreground">Require PIN to access</p>
+          </div>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </button>
       </div>
     </div>
   )

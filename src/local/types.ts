@@ -141,3 +141,14 @@ export interface SyncStateRecord {
   table_name: string // Primary key: 'students', 'rooms', etc.
   last_synced_at: string // ISO UTC timestamp of the last successful pull
 }
+
+/**
+ * App Settings: Local-only storage for configuration like PIN hashes and cached auth state.
+ */
+export interface AppSettingRecord {
+  key: string
+  value: unknown
+  created_at: string
+  updated_at: string
+}
+

@@ -5,6 +5,7 @@ import {
   DoorOpen,
   IndianRupee,
   MoreHorizontal,
+  Lock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./ThemeToggle"
@@ -63,6 +64,17 @@ export function Sidebar({ className }: { className?: string }) {
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />
         </div>
+        <button 
+          onClick={() => {
+            import("@/hooks/useAuthStore").then(mod => {
+              mod.useAuthStore.getState().setUnlocked(false)
+            })
+          }}
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Lock className="size-4" />
+          Lock App
+        </button>
       </div>
     </aside>
   )
