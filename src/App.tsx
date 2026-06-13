@@ -13,6 +13,7 @@ import Lock from "@/routes/Lock"
 import { supabase } from "@/cloud/supabase"
 import { db } from "@/local/db"
 import { useAuthStore } from "@/hooks/useAuthStore"
+import { startSync, stopSync } from "@/sync/engine"
 
 // 10 minutes in milliseconds
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
@@ -69,6 +70,16 @@ function AppLayout() {
       window.removeEventListener("scroll", handleActivity)
     }
   }, [isUnlocked, setUnlocked])
+
+  // Sync Engine lifecycle
+  useEffect(() => {
+    if (isUnlocked) {
+      startSync()
+    } else {
+      stopSync()
+    }
+    return () => stopSync()
+  }, [isUnlocked])
 
   return (
     <AppShell>
