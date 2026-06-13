@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Tailwind v4 theme ↔ CSS variable mapping ──────────────────────── */
+@theme inline {
+  /* shadcn/ui standard color tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* HostelDesk custom semantic colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Border radius scale */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Typography — Inter */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Shadows per Frontend Spec §2.3 */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-modal: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+
+/* ─── Light mode design tokens (Frontend Spec §2.1) ─────────────────── */
+:root {
+  --background: #f8fafc; /* Canvas */
+  --foreground: #0f172a; /* Ink */
+  --card: #ffffff; /* Surface */
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #4f46e5; /* Primary indigo */
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff; /* Primary Soft */
+  --secondary-foreground: #4338ca; /* Primary Dark */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b; /* Muted text */
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444; /* Danger */
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #4f46e5;
+  --radius: 0.625rem; /* 10px — buttons & inputs */
+
+  /* HostelDesk semantic */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b; /* Accent amber */
+  --warning-foreground: #ffffff;
+  --info: #0ea5e9;
+  --info-foreground: #ffffff;
+}
+
+/* ─── Dark mode design tokens (Frontend Spec §2.1) ───────────────────── */
+.dark {
+  --background: #0b1120; /* Canvas dark */
+  --foreground: #f1f5f9; /* Ink dark */
+  --card: #111827; /* Surface dark */
+  --card-foreground: #f1f5f9;
+  --popover: #111827;
+  --popover-foreground: #f1f5f9;
+  --primary: #6366f1; /* Primary dark */
+  --primary-foreground: #ffffff;
+  --secondary: #1e1b4b;
+  --secondary-foreground: #a5b4fc;
+  --muted: #1f2937;
+  --muted-foreground: #94a3b8; /* Muted dark */
+  --accent: #1f2937;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1f2937; /* Border dark */
+  --input: #1f2937;
+  --ring: #6366f1;
+
+  /* HostelDesk semantic */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #fbbf24; /* Accent dark */
+  --warning-foreground: #1f2937;
+  --info: #0ea5e9;
+  --info-foreground: #ffffff;
+}
+
+/* ─── Base styles ────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Tabular numbers for fee/count/date displays (Frontend Spec §2.2) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─── Reduced motion (Frontend Spec §2.5) ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
