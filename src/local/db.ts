@@ -83,6 +83,31 @@ export class HostelDB extends Dexie {
       sync_state: "table_name",
       app_settings: "key"
     })
+
+    // Version 3: Add notes and status to rooms, migrate floor to notes
+    this.version(3).stores({
+      students: "id, owner_id, room_id, status, deleted, updated_at",
+      student_documents: "id, owner_id, student_id, document_type, deleted, updated_at",
+      rooms: "id, owner_id, status, deleted, updated_at",
+      fee_records: "id, owner_id, student_id, due_date, status, deleted, updated_at",
+      attendance: "id, owner_id, &[student_id+date], date, [date+status], deleted, updated_at",
+      movement_logs: "id, owner_id, student_id, type, is_open, [student_id+is_open], [is_open+expected_return_at], deleted, updated_at",
+      outbox: "id, sequence, [status+sequence], [entity_type+entity_id]",
+      file_blobs: "id, outbox_id, status",
+      sync_state: "table_name",
+      app_settings: "key"
+    }).upgrade(tx => {
+      // Migrate existing rooms: rename floor to notes, add status
+      return tx.table("rooms").toCollection().modify(room => {
+        if (room.notes === undefined) {
+          room.notes = room.floor || null
+        }
+        delete room.floor
+        if (!room.status) {
+          room.status = "active"
+        }
+      })
+    })
   }
 }
 

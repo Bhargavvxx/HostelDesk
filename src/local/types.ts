@@ -41,7 +41,8 @@ export interface Room {
   owner_id: string
   room_number: string
   capacity: number
-  floor: string | null
+  notes: string | null
+  status: "active" | "archived"
   deleted: boolean
   created_at: string
   updated_at: string

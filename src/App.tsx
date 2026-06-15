@@ -8,6 +8,7 @@ import Students from "@/routes/Students"
 import Movement from "@/routes/Movement"
 import Fees from "@/routes/Fees"
 import More from "@/routes/More"
+import Rooms from "@/routes/Rooms"
 import Login from "@/routes/Login"
 import Lock from "@/routes/Lock"
 import { supabase } from "@/cloud/supabase"
@@ -156,6 +157,7 @@ export default function App() {
               <Route path="/movement" element={<Movement />} />
               <Route path="/fees" element={<Fees />} />
               <Route path="/more" element={<More />} />
+              <Route path="/rooms" element={<Rooms />} />
             </Route>
           </Routes>
         </BrowserRouter>

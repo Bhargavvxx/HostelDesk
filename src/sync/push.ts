@@ -3,32 +3,58 @@ import { supabase } from "@/cloud/supabase"
 import { OutboxRecord } from "@/local/types"
 import { processFileUpload } from "./files"
 
+const SYNCED_FIELD_ALLOWLIST: Record<string, string[]> = {
+  rooms: [
+    "id", "owner_id", "room_number", "capacity",
+    "notes", "status", "deleted", "created_at", "updated_at"
+  ],
+  students: [
+    "id", "owner_id", "room_id", "first_name", "last_name",
+    "phone", "emergency_contact", "address", "blood_group",
+    "photo_path", "status", "deleted", "created_at", "updated_at"
+  ],
+  student_documents: [
+    "id", "owner_id", "student_id", "document_type",
+    "file_path", "deleted", "created_at", "updated_at"
+  ],
+  fee_records: [
+    "id", "owner_id", "student_id", "amount_due", "amount_paid",
+    "due_date", "payment_date", "payment_method", "status",
+    "notes", "deleted", "created_at", "updated_at"
+  ],
+  attendance: [
+    "id", "owner_id", "student_id", "date", "status",
+    "notes", "deleted", "created_at", "updated_at"
+  ],
+  movement_logs: [
+    "id", "owner_id", "student_id", "type", "is_open",
+    "check_out_time", "check_in_time", "expected_return_at",
+    "purpose", "destination", "deleted", "created_at", "updated_at"
+  ],
+}
+
 // Strict table allowlist
-const SYNCED_TABLES = [
-  "rooms",
-  "students",
-  "student_documents",
-  "fee_records",
-  "attendance",
-  "movement_logs"
-] as const
+const SYNCED_TABLES = Object.keys(SYNCED_FIELD_ALLOWLIST)
 
 /**
  * Strips all local-only data before sending to Supabase.
  */
 function sanitizePayload(tableName: string, rawPayload: any): any {
-  if (!SYNCED_TABLES.includes(tableName as any)) {
+  if (!SYNCED_TABLES.includes(tableName)) {
     throw new Error(`Invalid table for push: ${tableName}`)
   }
 
-  const payload = { ...rawPayload }
+  const allowlist = SYNCED_FIELD_ALLOWLIST[tableName]
+  if (!allowlist) return rawPayload
+  
+  const sanitized: any = {}
+  for (const key of allowlist) {
+    if (key in rawPayload) {
+      sanitized[key] = rawPayload[key]
+    }
+  }
 
-  // Explicitly remove local-only blob refs and arbitrary objects
-  delete payload.local_photo_blob_id
-  delete payload.local_file_blob_id
-  delete payload.blob
-
-  return payload
+  return sanitized
 }
 
 /**
