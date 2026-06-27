@@ -2,8 +2,10 @@ import { useState, useMemo } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
 import { Users, Plus, AlertCircle, CheckCircle2, Search, X } from "lucide-react"
 import { db } from "@/local/db"
-import { Student } from "@/local/types"
+import { Student, FeeRecord } from "@/local/types"
 import { archiveStudent, restoreStudent, deleteStudent } from "@/local/queries/students"
+import { computeStudentFeeStats } from "@/local/queries/fees"
+import { getISTDateKey } from "@/local/helpers"
 import { useAuthStore } from "@/hooks/useAuthStore"
 import { StudentCard } from "@/components/students/StudentCard"
 import { StudentFormModal } from "@/components/students/StudentFormModal"
@@ -73,6 +75,28 @@ export default function Students() {
     () => db.rooms.where("deleted").equals(0).filter(r => r.status === "active").sortBy("room_number"),
     []
   )
+
+  // Single live query for ALL non-deleted fee records → overdue map
+  const allFeeRecords = useLiveQuery(
+    () => db.fee_records.where("deleted").equals(0).toArray(),
+    []
+  )
+
+  const overdueByStudentId = useMemo(() => {
+    if (!allFeeRecords) return {} as Record<string, boolean>
+    const todayIST = getISTDateKey()
+    const grouped: Record<string, FeeRecord[]> = {}
+    for (const r of allFeeRecords) {
+      if (!grouped[r.student_id]) grouped[r.student_id] = []
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      grouped[r.student_id]!.push(r)
+    }
+    const map: Record<string, boolean> = {}
+    for (const [sid, records] of Object.entries(grouped)) {
+      map[sid] = computeStudentFeeStats(records, todayIST).isOverdue
+    }
+    return map
+  }, [allFeeRecords])
 
   // --- In-memory filtering (AND logic: status + search + room) ---
   const filteredStudents = useMemo(() => {
@@ -335,6 +359,7 @@ export default function Students() {
               onDelete={handleDelete}
               onViewInfo={handleViewInfo}
               onViewDocs={handleViewDocs}
+              isOverdue={overdueByStudentId[student.id] ?? false}
             />
           ))}
         </div>

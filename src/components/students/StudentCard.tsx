@@ -12,9 +12,10 @@ interface StudentCardProps {
   onDelete: (student: Student) => void
   onViewInfo: (student: Student) => void
   onViewDocs: (student: Student) => void
+  isOverdue?: boolean
 }
 
-export function StudentCard({ student, onEdit, onArchive, onRestore, onDelete, onViewInfo, onViewDocs }: StudentCardProps) {
+export function StudentCard({ student, onEdit, onArchive, onRestore, onDelete, onViewInfo, onViewDocs, isOverdue }: StudentCardProps) {
   const room = useLiveQuery(
     () => (student.room_id ? db.rooms.get(student.room_id) : undefined),
     [student.room_id]
@@ -51,6 +52,12 @@ export function StudentCard({ student, onEdit, onArchive, onRestore, onDelete, o
             {room && (
               <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 Room {room.room_number}
+              </span>
+            )}
+
+            {isOverdue && (
+              <span className="inline-flex items-center rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">
+                Overdue
               </span>
             )}
           </div>
