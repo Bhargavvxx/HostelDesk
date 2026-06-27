@@ -107,7 +107,7 @@ export interface OutboxRecord {
   operation: "insert" | "update" | "delete" | "file_upload"
   payload: any
   status: "pending" | "syncing" | "failed" | "conflict"
-  depends_on?: string[] // Parent IDs this record must wait for
+  depends_on?: string // Parent ID this record must wait for
   attempts: number
   last_error?: string
   created_at: string

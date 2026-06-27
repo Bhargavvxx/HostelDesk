@@ -64,18 +64,21 @@ export async function pushOutboxItem(item: OutboxRecord, ownerId: string): Promi
   try {
     // 1. Dependency Resolution
     if (item.depends_on) {
-      const parent = await db.outbox.get(item.depends_on)
-      if (parent) {
-        if (parent.status === "conflict") {
-          // Parent failed permanently, cascade conflict
-          await db.outbox.update(item.id, {
-            status: "conflict",
-            last_error: "Blocked by parent conflict"
-          })
+      const parentId = Array.isArray(item.depends_on) ? item.depends_on[0] : item.depends_on
+      if (parentId) {
+        const parent = await db.outbox.get(parentId)
+        if (parent) {
+          if (parent.status === "conflict") {
+            // Parent failed permanently, cascade conflict
+            await db.outbox.update(item.id, {
+              status: "conflict",
+              last_error: "Blocked by parent conflict"
+            })
+            return false
+          }
+          // Parent is still pending/syncing/failed(retryable). We must wait.
           return false
         }
-        // Parent is still pending/syncing/failed(retryable). We must wait.
-        return false
       }
     }
 
