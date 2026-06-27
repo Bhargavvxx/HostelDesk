@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell"
 import Dashboard from "@/routes/Dashboard"
 import Students from "@/routes/Students"
 import Movement from "@/routes/Movement"
+import Attendance from "@/routes/Attendance"
 import Fees from "@/routes/Fees"
 import More from "@/routes/More"
 import Rooms from "@/routes/Rooms"
@@ -155,6 +156,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/students" element={<Students />} />
               <Route path="/movement" element={<Movement />} />
+              <Route path="/attendance" element={<Attendance />} />
               <Route path="/fees" element={<Fees />} />
               <Route path="/more" element={<More />} />
               <Route path="/rooms" element={<Rooms />} />
