@@ -20,6 +20,8 @@ import { startSync, stopSync } from "@/sync/engine"
 // 10 minutes in milliseconds
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000
 
+import { ErrorBoundary } from "@/components/common/ErrorBoundary"
+
 // Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { ownerId, isUnlocked } = useAuthStore()
@@ -85,7 +87,9 @@ function AppLayout() {
 
   return (
     <AppShell>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </AppShell>
   )
 }

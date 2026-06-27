@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
-import { CalendarCheck, Calendar, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Calendar, CalendarCheck, Users } from "lucide-react"
 import { db } from "@/local/db"
 import { markAttendance, bulkMarkAttendance, getLeaveSuggestion } from "@/local/queries/attendance"
 import { getISTDateKey } from "@/local/helpers"
 import { useAuthStore } from "@/hooks/useAuthStore"
 import { AttendanceRow } from "@/components/attendance/AttendanceRow"
+import { Banner } from "@/components/common/Banner"
+import { EmptyState } from "@/components/common/EmptyState"
 
 // Importing proper types
 import type { Attendance as AttendanceType } from "@/local/types"
@@ -154,22 +156,13 @@ export default function Attendance() {
             type="date"
             value={selectedDate}
             onChange={e => setSelectedDate(e.target.value)}
-            className="flex h-10 w-full sm:w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="flex h-10 w-full sm:w-[160px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
           />
         </div>
       </div>
 
       {/* Banner */}
-      {banner && (
-        <div className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium animate-in slide-in-from-top-2 ${
-          banner.type === "success" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-        }`}>
-          {banner.type === "success"
-            ? <CheckCircle2 className="size-4 shrink-0" />
-            : <AlertCircle className="size-4 shrink-0" />}
-          {banner.msg}
-        </div>
-      )}
+      {banner && <Banner type={banner.type} message={banner.msg} />}
 
       {/* Stats & Bulk Action */}
       {stats && (
@@ -205,12 +198,11 @@ export default function Attendance() {
         {!activeStudents ? (
           <div className="flex items-center justify-center p-12 text-muted-foreground">Loading...</div>
         ) : activeStudents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
-            <h2 className="mt-4 text-lg font-semibold">No active students</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Add students first to track attendance.
-            </p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No active students"
+            description="Add students first to track attendance."
+          />
         ) : (
           activeStudents.map(student => {
             const record = attendanceByStudentId[student.id]

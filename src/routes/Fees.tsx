@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
-import { IndianRupee, Plus, AlertCircle, CheckCircle2 } from "lucide-react"
+import { IndianRupee, Plus } from "lucide-react"
 import { db } from "@/local/db"
 import { FeeRecord } from "@/local/types"
 import { deleteFee } from "@/local/queries/fees"
@@ -8,6 +8,8 @@ import { useAuthStore } from "@/hooks/useAuthStore"
 import { FeeRow } from "@/components/fees/FeeRow"
 import { FeeFormModal } from "@/components/fees/FeeFormModal"
 import { StudentBalanceSummary } from "@/components/fees/StudentBalanceSummary"
+import { Banner } from "@/components/common/Banner"
+import { EmptyState } from "@/components/common/EmptyState"
 
 export default function Fees() {
   const { ownerId } = useAuthStore()
@@ -98,16 +100,7 @@ export default function Fees() {
       </div>
 
       {/* ── Banner ── */}
-      {banner && (
-        <div className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium animate-in slide-in-from-top-2 ${
-          banner.type === "success" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-        }`}>
-          {banner.type === "success"
-            ? <CheckCircle2 className="size-4 shrink-0" />
-            : <AlertCircle className="size-4 shrink-0" />}
-          {banner.msg}
-        </div>
-      )}
+      {banner && <Banner type={banner.type} message={banner.msg} />}
 
       {/* ── Student Picker ── */}
       <div className="space-y-1.5">
@@ -162,18 +155,12 @@ export default function Fees() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center animate-in fade-in-50">
-              <IndianRupee className="size-8 text-muted-foreground/40" />
-              <p className="mt-3 text-sm font-medium text-muted-foreground">
-                No fee records for this student yet.
-              </p>
-              <button
-                onClick={handleAddFee}
-                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-              >
-                Add first fee record
-              </button>
-            </div>
+            <EmptyState
+              icon={IndianRupee}
+              title="No fee records"
+              description="No fee records for this student yet."
+              action={{ label: "Add first fee record", onClick: handleAddFee }}
+            />
           )}
         </div>
       )}

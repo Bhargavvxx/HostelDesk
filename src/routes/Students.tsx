@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
-import { Users, Plus, AlertCircle, CheckCircle2, Search, X } from "lucide-react"
+import { Users, Plus, Search, X } from "lucide-react"
 import { db } from "@/local/db"
 import { Student, FeeRecord } from "@/local/types"
 import { archiveStudent, restoreStudent, deleteStudent } from "@/local/queries/students"
@@ -12,6 +12,8 @@ import { StudentCard } from "@/components/students/StudentCard"
 import { StudentFormModal } from "@/components/students/StudentFormModal"
 import { StudentDetailModal } from "@/components/students/StudentDetailModal"
 import { StudentDocumentsModal } from "@/components/students/StudentDocumentsModal"
+import { Banner } from "@/components/common/Banner"
+import { EmptyState } from "@/components/common/EmptyState"
 
 type FilterType = "active" | "archived"
 
@@ -225,20 +227,7 @@ export default function Students() {
       </div>
 
       {/* ── Success / Error Banner ── */}
-      {banner && (
-        <div
-          className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium animate-in slide-in-from-top-2 ${
-            banner.type === "success"
-              ? "bg-success/15 text-success"
-              : "bg-destructive/15 text-destructive"
-          }`}
-        >
-          {banner.type === "success"
-            ? <CheckCircle2 className="size-4 shrink-0" />
-            : <AlertCircle className="size-4 shrink-0" />}
-          {banner.msg}
-        </div>
-      )}
+      {banner && <Banner type={banner.type} message={banner.msg} />}
 
       {/* ── Search + Room Filter ── */}
       <div className="flex flex-wrap items-center gap-2">
@@ -264,23 +253,25 @@ export default function Students() {
           )}
         </div>
 
-        {/* Room filter dropdown */}
-        <select
-          id="student-room-filter"
-          value={roomFilter}
-          onChange={e => setRoomFilter(e.target.value)}
-          className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground min-w-[140px]"
-        >
-          <option value="">All rooms</option>
-          {activeRooms?.map(r => (
-            <option key={r.id} value={r.id}>
-              Room {r.room_number}
-            </option>
-          ))}
-        </select>
+        {/* Room select */}
+        <div className="flex items-center">
+          <select
+            value={roomFilter}
+            onChange={e => setRoomFilter(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="">All Rooms</option>
+            <option value="none">Unassigned</option>
+            {activeRooms?.map(r => (
+              <option key={r.id} value={r.id}>
+                Room {r.room_number}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* ── Status Tabs ── */}
+      {/* ── Filter Tabs ── */}
       <div className="flex w-full items-center gap-1 rounded-lg bg-muted p-1 sm:w-fit">
         {(["active", "archived"] as FilterType[]).map(tab => (
           <button
@@ -310,64 +301,35 @@ export default function Students() {
 
       {/* Empty DB state: zero students exist at all */}
       {isDbEmpty && (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center animate-in fade-in-50">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <Users className="size-6 text-muted-foreground" />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold">No students yet</h2>
-          <p className="mt-2 mb-6 text-sm text-muted-foreground max-w-[240px]">
-            Add your first student to get started.
-          </p>
-          <button
-            onClick={handleAddNew}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-          >
-            Add your first student
-          </button>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No students yet"
+          description="Add your first student to get started."
+          action={{ label: "Add your first student", onClick: handleAddNew }}
+        />
       )}
 
       {/* Filtered-empty state: DB has rows but no results match */}
       {isFilteredEmpty && (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center animate-in fade-in-50">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <Search className="size-6 text-muted-foreground" />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold">No students match</h2>
-          <p className="mt-2 mb-6 text-sm text-muted-foreground max-w-[240px]">
-            {hasActiveFilters
-              ? "Try adjusting your search or room filter."
-              : filter === "archived"
-                ? "There are no archived students."
-                : "There are no active students."}
-          </p>
-          <div className="flex flex-col items-center gap-2 sm:flex-row">
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-              >
-                Clear search
-              </button>
-            )}
-            {roomFilter && (
-              <button
-                onClick={() => setRoomFilter("")}
-                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-              >
-                Clear room filter
-              </button>
-            )}
-            {filter === "archived" && !hasActiveFilters && (
-              <button
-                onClick={() => setFilter("active")}
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                View active students
-              </button>
-            )}
-          </div>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No students match"
+          description={hasActiveFilters
+            ? "Try adjusting your search or room filter."
+            : filter === "archived"
+              ? "There are no archived students."
+              : "There are no active students."}
+          action={
+            (searchQuery || roomFilter || filter === "archived") ? {
+              label: "Clear filters",
+              onClick: () => {
+                setSearchQuery("")
+                setRoomFilter("")
+                setFilter("active")
+              }
+            } : undefined
+          }
+        />
       )}
 
       {/* Student card grid */}

@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
-import { BedDouble, Plus, AlertCircle, CheckCircle2 } from "lucide-react"
+import { BedDouble, Plus } from "lucide-react"
 import { db } from "@/local/db"
 import { Room } from "@/local/types"
 import { getRoomOccupancyMap, archiveRoom, restoreRoom, deleteRoom } from "@/local/queries/rooms"
 import { useAuthStore } from "@/hooks/useAuthStore"
 import { RoomCard } from "@/components/rooms/RoomCard"
+import { Banner } from "@/components/common/Banner"
+import { EmptyState } from "@/components/common/EmptyState"
 import { RoomFormModal } from "@/components/rooms/RoomFormModal"
 
 type FilterType = "active" | "archived" | "all"
@@ -96,18 +98,7 @@ export default function Rooms() {
       </div>
 
       {/* Local Banner */}
-      {banner && (
-        <div 
-          className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium animate-in slide-in-from-top-2 ${
-            banner.type === "success" 
-              ? "bg-success/15 text-success" 
-              : "bg-destructive/15 text-destructive"
-          }`}
-        >
-          {banner.type === "success" ? <CheckCircle2 className="size-4" /> : <AlertCircle className="size-4" />}
-          {banner.msg}
-        </div>
-      )}
+      {banner && <Banner type={banner.type} message={banner.msg} />}
 
       {/* Filter Tabs */}
       <div className="flex w-full items-center gap-1 rounded-lg bg-muted p-1 sm:w-fit">
@@ -143,32 +134,20 @@ export default function Rooms() {
         </div>
       ) : (
         /* Empty State */
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center animate-in fade-in-50">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <BedDouble className="size-6 text-muted-foreground" />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold">No rooms found</h2>
-          <p className="mt-2 mb-6 text-sm text-muted-foreground max-w-[250px]">
-            {filter === "active" 
-              ? "You haven't created any rooms yet. Add one to get started."
-              : `There are no ${filter} rooms.`}
-          </p>
-          {filter === "active" ? (
-            <button
-              onClick={handleAddNew}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-            >
-              Add your first room
-            </button>
-          ) : (
-            <button
-              onClick={() => setFilter("active")}
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              View active rooms
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={BedDouble}
+          title="No rooms found"
+          description={filter === "active" 
+            ? "You haven't created any rooms yet. Add one to get started."
+            : `There are no ${filter} rooms.`}
+          action={filter === "active" ? {
+            label: "Add your first room",
+            onClick: handleAddNew
+          } : {
+            label: "View active rooms",
+            onClick: () => setFilter("active")
+          }}
+        />
       )}
 
       {/* Modal */}

@@ -1,12 +1,14 @@
 import { useState, useMemo, useEffect } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
-import { DoorOpen, Plus, AlertCircle, CheckCircle2 } from "lucide-react"
+import { DoorOpen, Plus } from "lucide-react"
 import { db } from "@/local/db"
 import { checkIn } from "@/local/queries/movement"
 import { MovementLog } from "@/local/types"
 import { useAuthStore } from "@/hooks/useAuthStore"
 import { MovementRow } from "@/components/movement/MovementRow"
 import { MovementFormModal } from "@/components/movement/MovementFormModal"
+import { Banner } from "@/components/common/Banner"
+import { EmptyState } from "@/components/common/EmptyState"
 
 export default function Movement() {
   const { ownerId } = useAuthStore()
@@ -103,16 +105,7 @@ export default function Movement() {
       </div>
 
       {/* ── Banner ── */}
-      {banner && (
-        <div className={`flex items-center gap-2 rounded-lg p-3 text-sm font-medium animate-in slide-in-from-top-2 ${
-          banner.type === "success" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-        }`}>
-          {banner.type === "success"
-            ? <CheckCircle2 className="size-4 shrink-0" />
-            : <AlertCircle className="size-4 shrink-0" />}
-          {banner.msg}
-        </div>
-      )}
+      {banner && <Banner type={banner.type} message={banner.msg} />}
 
       {/* ── Student Picker ── */}
       <div className="space-y-1.5">
@@ -136,15 +129,11 @@ export default function Movement() {
 
       {/* ── No student selected ── */}
       {!selectedStudentId && (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center animate-in fade-in-50">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <DoorOpen className="size-6 text-muted-foreground" />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold">Select a student</h2>
-          <p className="mt-2 text-sm text-muted-foreground max-w-[240px]">
-            Choose a student above to log a check-out or check-in.
-          </p>
-        </div>
+        <EmptyState
+          icon={DoorOpen}
+          title="Select a student"
+          description="Choose a student above to log a check-out or check-in."
+        />
       )}
 
       {/* ── Student selected ── */}
@@ -171,18 +160,12 @@ export default function Movement() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center animate-in fade-in-50 mt-4">
-              <DoorOpen className="size-8 text-muted-foreground/40" />
-              <p className="mt-3 text-sm font-medium text-muted-foreground">
-                No movement history for this student.
-              </p>
-              <button
-                onClick={handleCheckOut}
-                className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-              >
-                Check out now
-              </button>
-            </div>
+            <EmptyState
+              icon={DoorOpen}
+              title="No movement history"
+              description="No movement history for this student."
+              action={{ label: "Check out now", onClick: handleCheckOut }}
+            />
           )}
         </div>
       )}
