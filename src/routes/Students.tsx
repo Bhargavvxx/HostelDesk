@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
 import { Users, Plus, AlertCircle, CheckCircle2, Search, X } from "lucide-react"
 import { db } from "@/local/db"
 import { Student, FeeRecord } from "@/local/types"
 import { archiveStudent, restoreStudent, deleteStudent } from "@/local/queries/students"
 import { computeStudentFeeStats } from "@/local/queries/fees"
-import { getISTDateKey } from "@/local/helpers"
+import { computeMovementStatus, MovementStatus } from "@/local/queries/movement"
+import { getISTDateKey, nowUTCISO } from "@/local/helpers"
 import { useAuthStore } from "@/hooks/useAuthStore"
 import { StudentCard } from "@/components/students/StudentCard"
 import { StudentFormModal } from "@/components/students/StudentFormModal"
@@ -97,6 +98,29 @@ export default function Students() {
     }
     return map
   }, [allFeeRecords])
+
+  // Single live query for ALL open movement logs → movement status map
+  const openMovements = useLiveQuery(
+    () => db.movement_logs.where("is_open").equals(1).filter(l => !l.deleted).toArray(),
+    []
+  )
+
+  // Force tick for dynamic overdue checking
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const movementStatusByStudentId = useMemo(() => {
+    if (!openMovements) return {} as Record<string, MovementStatus>
+    const now = nowUTCISO()
+    const map: Record<string, MovementStatus> = {}
+    for (const log of openMovements) {
+      map[log.student_id] = computeMovementStatus(log, now)
+    }
+    return map
+  }, [openMovements, tick])
 
   // --- In-memory filtering (AND logic: status + search + room) ---
   const filteredStudents = useMemo(() => {
@@ -360,6 +384,7 @@ export default function Students() {
               onViewInfo={handleViewInfo}
               onViewDocs={handleViewDocs}
               isOverdue={overdueByStudentId[student.id] ?? false}
+              movementStatus={movementStatusByStudentId[student.id] || "in"}
             />
           ))}
         </div>

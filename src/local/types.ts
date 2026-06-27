@@ -84,7 +84,7 @@ export interface MovementLog {
   is_open: boolean
   check_out_time: string // ISO UTC
   check_in_time: string | null // ISO UTC or null
-  expected_return_at: string // ISO UTC
+  expected_return_at: string | null // ISO UTC or null
   purpose: string | null
   destination: string | null
   deleted: boolean
