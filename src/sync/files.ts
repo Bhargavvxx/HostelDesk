@@ -21,32 +21,42 @@ export async function processFileUpload(item: OutboxRecord, ownerId: string): Pr
     throw new Error(`Unknown entity type for file upload: ${item.entity_type}`)
   }
 
-  // 1. Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("hosteldesk-files")
-    .upload(storagePath, fileBlob.blob, {
-      upsert: true,
-      contentType: fileBlob.mime_type
-    })
+  // Mark blob as uploading before attempting
+  await db.file_blobs.update(fileBlobId, { status: "uploading" })
 
-  if (uploadError) throw uploadError
+  try {
+    // 1. Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from("hosteldesk-files")
+      .upload(storagePath, fileBlob.blob, {
+        upsert: true,
+        contentType: fileBlob.mime_type
+      })
 
-  // 2. Update Cloud Row
-  const updatePayload = item.entity_type === "students" 
-    ? { photo_path: storagePath }
-    : { file_path: storagePath }
+    if (uploadError) throw uploadError
 
-  const { data: cloudRow, error: updateError } = await supabase
-    .from(item.entity_type)
-    .update(updatePayload)
-    .eq("id", item.entity_id)
-    .select()
-    .single()
+    // 2. Update Cloud Row
+    const updatePayload = item.entity_type === "students" 
+      ? { photo_path: storagePath }
+      : { file_path: storagePath }
 
-  if (updateError) throw updateError
+    const { data: cloudRow, error: updateError } = await supabase
+      .from(item.entity_type)
+      .update(updatePayload)
+      .eq("id", item.entity_id)
+      .select()
+      .single()
 
-  // 3. Mark file blob synced (we delete it to save space, or mark it synced)
-  await db.file_blobs.update(fileBlobId, { status: "synced", blob: undefined })
+    if (updateError) throw updateError
 
-  return cloudRow
+    // 3. Mark file blob synced (clear the blob bytes to free space)
+    await db.file_blobs.update(fileBlobId, { status: "synced", blob: undefined })
+
+    return cloudRow
+
+  } catch (err) {
+    // On any failure, reset blob status so the next retry can re-attempt the upload
+    await db.file_blobs.update(fileBlobId, { status: "local_only" })
+    throw err
+  }
 }

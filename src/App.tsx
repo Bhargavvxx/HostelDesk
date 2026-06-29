@@ -11,6 +11,7 @@ import Fees from "@/routes/Fees"
 import More from "@/routes/More"
 import Rooms from "@/routes/Rooms"
 import Backup from "@/routes/Backup"
+import Sync from "@/routes/Sync"
 import Login from "@/routes/Login"
 import Lock from "@/routes/Lock"
 import { supabase } from "@/cloud/supabase"
@@ -166,6 +167,7 @@ export default function App() {
               <Route path="/more" element={<More />} />
               <Route path="/rooms" element={<Rooms />} />
               <Route path="/backup" element={<Backup />} />
+              <Route path="/sync" element={<Sync />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -3,6 +3,10 @@ import { supabase } from "@/cloud/supabase"
 import { OutboxRecord } from "@/local/types"
 import { processFileUpload } from "./files"
 
+/** Maximum number of automatic retry attempts before an item needs manual attention. */
+export const MAX_ATTEMPTS = 5
+
+
 const SYNCED_FIELD_ALLOWLIST: Record<string, string[]> = {
   rooms: [
     "id", "owner_id", "room_number", "capacity",

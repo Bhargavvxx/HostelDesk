@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router"
 import { 
   WifiOff, 
   AlertCircle, 
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils"
 export function SyncIndicator() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { isCloudSessionVerified } = useAuthStore()
-  const { isSyncing, pendingCount, conflictCount, lastSyncAt } = useSyncStatus()
+  const { isSyncing, pendingCount, conflictCount, highAttemptFailedCount, lastSyncAt } = useSyncStatus()
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)
@@ -28,7 +29,7 @@ export function SyncIndicator() {
     }
   }, [])
 
-  let state: "offline" | "unverified" | "conflict" | "syncing" | "pending" | "synced"
+  let state: "offline" | "unverified" | "conflict" | "failed" | "syncing" | "pending" | "synced"
   
   // Exact precedence logic
   if (isOffline) {
@@ -37,6 +38,8 @@ export function SyncIndicator() {
     state = "unverified"
   } else if (conflictCount > 0) {
     state = "conflict"
+  } else if (highAttemptFailedCount > 0) {
+    state = "failed"
   } else if (isSyncing) {
     state = "syncing"
   } else if (pendingCount > 0) {
@@ -63,7 +66,13 @@ export function SyncIndicator() {
       icon: AlertTriangle,
       label: `Conflict (${conflictCount})`,
       colorClass: "border-destructive/30 text-destructive bg-destructive/10",
-      tooltip: `${conflictCount} item(s) need manual resolution.`,
+      tooltip: `${conflictCount} item(s) need manual resolution. Tap to review.`,
+    },
+    failed: {
+      icon: AlertCircle,
+      label: `Failed (${highAttemptFailedCount})`,
+      colorClass: "border-amber-500/30 text-amber-600 bg-amber-500/10 dark:text-amber-400",
+      tooltip: `${highAttemptFailedCount} item(s) need attention. Tap to review.`,
     },
     syncing: {
       icon: Loader2,
@@ -75,7 +84,7 @@ export function SyncIndicator() {
       icon: CloudUpload,
       label: `Pending (${pendingCount})`,
       colorClass: "border-amber-500/30 text-amber-600 bg-amber-500/10 dark:text-amber-400",
-      tooltip: `${pendingCount} item(s) waiting to upload.`,
+      tooltip: `${pendingCount} item(s) waiting to upload. Tap to review.`,
     },
     synced: {
       icon: CheckCircle2,
@@ -87,16 +96,28 @@ export function SyncIndicator() {
 
   const { icon: Icon, label, colorClass, tooltip } = config[state]
 
-  return (
+  // Actionable states link to the sync management screen
+  const isActionable = state === "conflict" || state === "failed" || state === "pending"
+
+  const badge = (
     <Badge
       variant="outline"
-      className={cn("gap-1.5 whitespace-nowrap overflow-hidden transition-colors duration-300", colorClass)}
+      className={cn(
+        "gap-1.5 whitespace-nowrap overflow-hidden transition-colors duration-300",
+        colorClass,
+        isActionable && "cursor-pointer hover:opacity-80"
+      )}
       title={tooltip}
       aria-label={`${label} - ${tooltip}`}
     >
       <Icon className={cn("size-3.5 shrink-0", state === "syncing" && "animate-spin")} />
-      {/* Always show text to ensure counts/states are visible on mobile */}
       <span className="text-[11px] font-medium leading-none">{label}</span>
     </Badge>
   )
+
+  if (isActionable) {
+    return <Link to="/sync">{badge}</Link>
+  }
+
+  return badge
 }
