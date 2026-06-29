@@ -59,8 +59,13 @@ function ConflictItemRow({ item, onAction }: ConflictItemRowProps) {
 
   const handleDiscard = async () => {
     if (isMovement) {
+      const descendants = await getDependentDescendants(item.id)
+      const depMsg = descendants.length > 0 
+        ? ` and ${descendants.length} dependent sync item(s)` 
+        : ""
+
       const ok = window.confirm(
-        "This will discard your local check-out. The cloud already accepted a check-out for this student. Confirm?"
+        `This will discard your local check-out${depMsg}. The cloud already accepted a check-out for this student. Confirm?`
       )
       if (!ok) return
       setIsWorking(true)

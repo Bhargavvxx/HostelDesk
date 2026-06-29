@@ -23,7 +23,8 @@ export async function pullChanges(ownerId: string): Promise<void> {
 async function pullTable(tableName: string, ownerId: string) {
   // 1. Get last synced timestamp
   const syncState = await db.sync_state.get(tableName)
-  let queryAt = new Date(0).toISOString()
+  const previousLastSyncedAt = syncState?.last_synced_at ?? new Date(0).toISOString()
+  let queryAt = previousLastSyncedAt
   
   if (syncState && syncState.last_synced_at) {
     // 2-second overlap window to prevent timestamp boundary bugs
@@ -52,7 +53,7 @@ async function pullTable(tableName: string, ownerId: string) {
   if (!data || data.length === 0) return
 
   // 3. Apply to Dexie carefully
-  let maxUpdatedAt = queryAt
+  let maxAppliedUpdatedAt = previousLastSyncedAt
 
   for (const row of data) {
     // Check if there is an active outbox item for this row.
@@ -90,8 +91,8 @@ async function pullTable(tableName: string, ownerId: string) {
       await db[tableName].put(row)
       
       // ONLY advance the sync checkpoint for rows that are actually applied locally
-      if (row.updated_at > maxUpdatedAt) {
-        maxUpdatedAt = row.updated_at
+      if (row.updated_at > maxAppliedUpdatedAt) {
+        maxAppliedUpdatedAt = row.updated_at
       }
     }
   }
@@ -99,7 +100,7 @@ async function pullTable(tableName: string, ownerId: string) {
   // 4. Update sync state
   await db.sync_state.put({
     table_name: tableName,
-    last_synced_at: maxUpdatedAt
+    last_synced_at: maxAppliedUpdatedAt
   })
 }
 
