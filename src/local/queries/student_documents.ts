@@ -1,5 +1,5 @@
 import { db } from "@/local/db"
-import { StudentDocument, FileBlobRecord } from "@/local/types"
+import { StudentDocument, FileBlobRecord, OutboxRecord } from "@/local/types"
 import { generateId, nowUTCISO } from "@/local/helpers"
 import { getNextOutboxSequence } from "@/sync/sequence"
 
@@ -10,9 +10,13 @@ export interface CreateDocumentInput {
   mimeType: string
 }
 
-async function getLatestActiveOutboxItem(studentId: string): Promise<string | undefined> {
-  const pendingItems = await db.outbox.where("entity_id").equals(studentId).toArray()
-  const activeItems = pendingItems.filter(i => ["pending", "syncing", "failed", "conflict"].includes(i.status))
+async function getLatestActiveOutboxItem(entities: [string, string][]): Promise<string | undefined> {
+  const allItems: OutboxRecord[] = []
+  for (const [eType, eId] of entities) {
+    const items = await db.outbox.where("[entity_type+entity_id]").equals([eType, eId]).toArray()
+    allItems.push(...items.filter(i => ["pending", "syncing", "failed", "conflict"].includes(i.status)))
+  }
+  const activeItems = allItems
 
   if (activeItems.some(i => i.status === "conflict")) {
     throw new Error("Cannot add documents while the student has a sync conflict. Please resolve the conflict first.")
@@ -53,7 +57,7 @@ export async function createStudentDocument(data: CreateDocumentInput, ownerId: 
   }
 
   await db.transaction("rw", [db.student_documents, db.file_blobs, db.outbox, db.app_settings], async () => {
-    const parentDependencyId = await getLatestActiveOutboxItem(data.studentId)
+    const parentDependencyId = await getLatestActiveOutboxItem([["students", data.studentId]])
 
     await db.student_documents.put(doc)
     await db.file_blobs.put(fileBlobRecord)

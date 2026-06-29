@@ -28,9 +28,13 @@ export interface UpdateStudentInput {
   photoMimeType?: string | null
 }
 
-async function getLatestActiveOutboxItem(entityId: string): Promise<string | undefined> {
-  const pendingItems = await db.outbox.where("entity_id").equals(entityId).toArray()
-  const activeItems = pendingItems.filter(i => ["pending", "syncing", "failed", "conflict"].includes(i.status))
+async function getLatestActiveOutboxItem(entities: [string, string][]): Promise<string | undefined> {
+  const allItems: import("@/local/types").OutboxRecord[] = []
+  for (const [eType, eId] of entities) {
+    const items = await db.outbox.where("[entity_type+entity_id]").equals([eType, eId]).toArray()
+    allItems.push(...items.filter(i => ["pending", "syncing", "failed", "conflict"].includes(i.status)))
+  }
+  const activeItems = allItems
 
   if (activeItems.some(i => i.status === "conflict")) {
     throw new Error("Cannot modify files while the record has a sync conflict. Please resolve the conflict first.")
@@ -180,7 +184,7 @@ export async function updateStudent(id: string, data: UpdateStudentInput, ownerI
   }
 
   return await db.transaction("rw", [db.students, db.file_blobs, db.outbox, db.app_settings], async () => {
-    const parentDependencyId = await getLatestActiveOutboxItem(id)
+    const parentDependencyId = await getLatestActiveOutboxItem([["students", id]])
 
     await db.students.put(updatedStudent)
 
@@ -242,7 +246,7 @@ export async function archiveStudent(id: string, ownerId: string): Promise<Stude
   }
 
   return await db.transaction("rw", [db.students, db.outbox, db.app_settings], async () => {
-    const parentDependencyId = await getLatestActiveOutboxItem(id)
+    const parentDependencyId = await getLatestActiveOutboxItem([["students", id]])
 
     await db.students.put(updatedStudent)
 
@@ -280,7 +284,7 @@ export async function restoreStudent(id: string, ownerId: string): Promise<Stude
   }
 
   return await db.transaction("rw", [db.students, db.outbox, db.app_settings], async () => {
-    const parentDependencyId = await getLatestActiveOutboxItem(id)
+    const parentDependencyId = await getLatestActiveOutboxItem([["students", id]])
 
     await db.students.put(updatedStudent)
 
@@ -311,7 +315,7 @@ export async function deleteStudent(id: string, ownerId: string): Promise<void> 
     const existing = await db.students.get(id)
     if (!existing || existing.deleted || existing.owner_id !== ownerId) return
 
-    const parentDependencyId = await getLatestActiveOutboxItem(id)
+    const parentDependencyId = await getLatestActiveOutboxItem([["students", id]])
 
     const now = nowUTCISO()
     await db.students.update(id, { deleted: true, room_id: null, updated_at: now })

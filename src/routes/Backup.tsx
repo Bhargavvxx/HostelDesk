@@ -119,6 +119,9 @@ export default function Backup() {
             Backups may contain private student data and images. Store them securely.
             Full JSON backups also include local settings and sync metadata.
           </p>
+          <p className="mt-1">
+            <strong>Note:</strong> JSON backups include local unsynced image blobs. Synced images are referenced by cloud storage paths and require Supabase Storage availability (they are not embedded in the JSON).
+          </p>
         </div>
       </div>
 

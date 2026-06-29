@@ -26,7 +26,7 @@ const menuItems = [
     to: "/backup",
     icon: Download,
     label: "Backup & Export",
-    description: "CSV, Excel, JSON, Drive",
+    description: "CSV, Excel, JSON",
   },
 ]
 

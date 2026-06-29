@@ -29,10 +29,10 @@ export function computeMovementStatus(
  * given entity IDs, or undefined if none.
  * Throws if any involved item is in conflict.
  */
-async function getLatestActiveOutboxItem(entityIds: string[]): Promise<string | undefined> {
+async function getLatestActiveOutboxItem(entities: [string, string][]): Promise<string | undefined> {
   const allItems: OutboxRecord[] = []
-  for (const eid of entityIds) {
-    const items = await db.outbox.where("entity_id").equals(eid).toArray()
+  for (const [eType, eId] of entities) {
+    const items = await db.outbox.where("[entity_type+entity_id]").equals([eType, eId]).toArray()
     allItems.push(...items.filter(i =>
       ["pending", "syncing", "failed", "conflict"].includes(i.status)
     ))
@@ -102,7 +102,7 @@ export async function checkOut(data: CheckOutInput, ownerId: string): Promise<Mo
     }
 
     // 3. Resolve dependency (student only)
-    const depends_on = await getLatestActiveOutboxItem([data.studentId])
+    const depends_on = await getLatestActiveOutboxItem([["students", data.studentId]])
 
     // 4. Save to Dexie
     await db.movement_logs.put(record)
@@ -152,7 +152,10 @@ export async function checkIn(logId: string, ownerId: string): Promise<MovementL
     }
 
     // Resolve dependency (student and log)
-    const depends_on = await getLatestActiveOutboxItem([existing.student_id, logId])
+    const depends_on = await getLatestActiveOutboxItem([
+      ["students", existing.student_id], 
+      ["movement_logs", logId]
+    ])
 
     // Save to Dexie
     await db.movement_logs.put(updated)

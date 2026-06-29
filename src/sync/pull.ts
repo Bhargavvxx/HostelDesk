@@ -71,8 +71,8 @@ async function pullTable(tableName: string, ownerId: string) {
 
     if (hasPendingLocal) {
       console.warn(`Skipping pull for ${tableName}:${row.id} due to active local outbox items.`)
-      // We still update the maxUpdatedAt so we don't query it again,
-      // but we let the outbox Push phase resolve the local overwrite.
+      // A skipped row MUST NOT advance the checkpoint. If the local outbox item is later removed, 
+      // we need to be able to fetch this cloud row again.
     } else {
       // Check if this pull overwrites an existing local row with a different updated_at.
       // Exact condition: row exists locally AND updated_at differs AND no active outbox (already checked above).
@@ -88,10 +88,11 @@ async function pullTable(tableName: string, ownerId: string) {
 
       // @ts-ignore dynamic table access
       await db[tableName].put(row)
-    }
-
-    if (row.updated_at > maxUpdatedAt) {
-      maxUpdatedAt = row.updated_at
+      
+      // ONLY advance the sync checkpoint for rows that are actually applied locally
+      if (row.updated_at > maxUpdatedAt) {
+        maxUpdatedAt = row.updated_at
+      }
     }
   }
 

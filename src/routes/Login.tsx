@@ -48,6 +48,15 @@ export default function Login() {
     }
 
     if (data.user) {
+      // Check for account switch to prevent data mixing
+      const prevAuth = await db.app_settings.get("auth")
+      if (prevAuth && (prevAuth.value as any)?.owner_id && (prevAuth.value as any).owner_id !== data.user.id) {
+        await supabase.auth.signOut()
+        setError("This device contains data from another account. Please clear site data before switching accounts.")
+        setLoading(false)
+        return
+      }
+
       // Save owner_id locally for offline fallback
       await db.app_settings.put({
         key: "auth",

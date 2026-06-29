@@ -35,11 +35,35 @@ export async function getOverwriteLog(): Promise<OverwriteLogEntry[]> {
 // ─── Mutation helpers ─────────────────────────────────────────────────────────
 
 /**
- * Permanently removes an outbox item after the user confirms they no longer
- * want to retry that local change. Does NOT modify any domain row.
+ * Helper to recursively find all outbox IDs that depend on a given root ID.
+ */
+export async function getDependentDescendants(rootOutboxId: string): Promise<string[]> {
+  const descendants: string[] = []
+  const visited = new Set<string>()
+  
+  async function traverse(id: string) {
+    if (visited.has(id)) return
+    visited.add(id)
+    const children = await db.outbox.filter(item => item.depends_on === id).toArray()
+    for (const child of children) {
+      descendants.push(child.id)
+      await traverse(child.id)
+    }
+  }
+
+  await traverse(rootOutboxId)
+  return descendants
+}
+
+/**
+ * Permanently removes an outbox item AND all dependent descendants.
+ * Does NOT modify any domain row.
  */
 export async function removeOutboxItem(outboxId: string): Promise<void> {
-  await db.outbox.delete(outboxId)
+  await db.transaction("rw", db.outbox, async () => {
+    const descendants = await getDependentDescendants(outboxId)
+    await db.outbox.bulkDelete([outboxId, ...descendants])
+  })
 }
 
 /**
@@ -70,8 +94,9 @@ export async function resolveMovementDuplicate(
   const now = new Date().toISOString()
 
   await db.transaction("rw", db.outbox, db.movement_logs, async () => {
-    // 1. Delete the conflict outbox item
-    await db.outbox.delete(outboxId)
+    // 1. Delete the conflict outbox item AND any dependent items
+    const descendants = await getDependentDescendants(outboxId)
+    await db.outbox.bulkDelete([outboxId, ...descendants])
 
     // 2. Soft-delete the local duplicate movement log
     //    Setting is_open=false prevents accidental "Out Now" display.

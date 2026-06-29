@@ -73,10 +73,10 @@ function deriveStatus(amountDue: number, amountPaid: number): "pending" | "parti
  * given entity IDs, or undefined if none.
  * Throws if any involved item is in conflict — the caller should surface this error.
  */
-async function getLatestActiveOutboxItem(entityIds: string[]): Promise<string | undefined> {
+async function getLatestActiveOutboxItem(entities: [string, string][]): Promise<string | undefined> {
   const allItems = []
-  for (const eid of entityIds) {
-    const items = await db.outbox.where("entity_id").equals(eid).toArray()
+  for (const [eType, eId] of entities) {
+    const items = await db.outbox.where("[entity_type+entity_id]").equals([eType, eId]).toArray()
     allItems.push(...items.filter(i =>
       ["pending", "syncing", "failed", "conflict"].includes(i.status)
     ))
@@ -124,7 +124,7 @@ export async function createFee(data: CreateFeeInput, ownerId: string): Promise<
 
   await db.transaction("rw", [db.fee_records, db.outbox, db.app_settings], async () => {
     // createFee: only check student parent dependency
-    const depends_on = await getLatestActiveOutboxItem([data.studentId])
+    const depends_on = await getLatestActiveOutboxItem([["students", data.studentId]])
 
     await db.fee_records.put(record)
 
@@ -175,7 +175,10 @@ export async function updateFee(id: string, data: UpdateFeeInput, ownerId: strin
 
   return await db.transaction("rw", [db.fee_records, db.outbox, db.app_settings], async () => {
     // updateFee: check both student and fee record outbox
-    const depends_on = await getLatestActiveOutboxItem([existing.student_id, id])
+    const depends_on = await getLatestActiveOutboxItem([
+      ["students", existing.student_id], 
+      ["fee_records", id]
+    ])
 
     await db.fee_records.put(updated)
 
@@ -204,7 +207,10 @@ export async function deleteFee(id: string, ownerId: string): Promise<void> {
     if (!existing || existing.deleted || existing.owner_id !== ownerId) return
 
     // deleteFee: check both student and fee record outbox
-    const depends_on = await getLatestActiveOutboxItem([existing.student_id, id])
+    const depends_on = await getLatestActiveOutboxItem([
+      ["students", existing.student_id], 
+      ["fee_records", id]
+    ])
 
     const now = nowUTCISO()
     await db.fee_records.update(id, { deleted: true, updated_at: now })

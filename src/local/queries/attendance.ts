@@ -10,10 +10,10 @@ import { getNextOutboxSequence } from "@/sync/sequence"
  * given entity IDs, or undefined if none.
  * Throws if any involved item is in conflict.
  */
-async function getLatestActiveOutboxItem(entityIds: string[]): Promise<string | undefined> {
+async function getLatestActiveOutboxItem(entities: [string, string][]): Promise<string | undefined> {
   const allItems: OutboxRecord[] = []
-  for (const eid of entityIds) {
-    const items = await db.outbox.where("entity_id").equals(eid).toArray()
+  for (const [eType, eId] of entities) {
+    const items = await db.outbox.where("[entity_type+entity_id]").equals([eType, eId]).toArray()
     allItems.push(...items.filter(i =>
       ["pending", "syncing", "failed", "conflict"].includes(i.status)
     ))
@@ -104,8 +104,8 @@ export async function markAttendance(input: MarkAttendanceInput, ownerId: string
     }
 
     // 3. Resolve dependency
-    const deps = [input.studentId]
-    if (isUpdate) deps.push(recordId)
+    const deps: [string, string][] = [["students", input.studentId]]
+    if (isUpdate) deps.push(["attendance", recordId])
     const depends_on = await getLatestActiveOutboxItem(deps)
 
     // 4. Save to Dexie
@@ -159,8 +159,8 @@ export async function bulkMarkAttendance(date: string, selections: BulkAttendanc
       const isUpdate = !!existing
       const recordId = existing ? existing.id : generateId()
 
-      const deps = [sel.studentId]
-      if (isUpdate) deps.push(recordId)
+      const deps: [string, string][] = [["students", sel.studentId]]
+      if (isUpdate) deps.push(["attendance", recordId])
       const depends_on = await getLatestActiveOutboxItem(deps) // Will throw if conflict exists
 
       // 3. Build Record

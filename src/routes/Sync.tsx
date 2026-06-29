@@ -19,6 +19,7 @@ import {
   removeOutboxItem,
   retryOutboxItem,
   resolveMovementDuplicate,
+  getDependentDescendants,
   OverwriteLogEntry,
 } from "@/local/queries/sync"
 import { OutboxRecord } from "@/local/types"
@@ -73,8 +74,13 @@ function ConflictItemRow({ item, onAction }: ConflictItemRowProps) {
         setIsWorking(false)
       }
     } else {
+      const descendants = await getDependentDescendants(item.id)
+      const depMsg = descendants.length > 0 
+        ? ` and ${descendants.length} dependent sync item(s)` 
+        : ""
+        
       const ok = window.confirm(
-        "This will permanently stop retrying this local change. Your local change may not have reached the cloud. This cannot be undone."
+        `This will permanently stop retrying this local change${depMsg}. This cannot be undone.`
       )
       if (!ok) return
       setIsWorking(true)
@@ -158,8 +164,13 @@ function FailedItemRow({ item, onAction }: FailedItemRowProps) {
   }
 
   const handleRemove = async () => {
+    const descendants = await getDependentDescendants(item.id)
+    const depMsg = descendants.length > 0 
+      ? ` and ${descendants.length} dependent sync item(s)` 
+      : ""
+      
     const ok = window.confirm(
-      "This will permanently stop retrying this local change. Your local change may not have reached the cloud. This cannot be undone."
+      `This will permanently stop retrying this local change${depMsg}. This cannot be undone.`
     )
     if (!ok) return
     setIsWorking(true)

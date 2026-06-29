@@ -107,7 +107,7 @@ Supabase provides the Postgres database, Auth, and object Storage. Row-Level Sec
 - **Conflict Handling:** Server-authoritative `updated_at` resolves general conflicts (last-write-wins). Postgres constraints (like duplicate movements) flag the outbox item as a `conflict` for manual resolution.
 
 ## Backup and Export Details
-- **JSON Full Backup:** A versioned envelope containing all tables, allowing full destructive restore on another device.
+- **JSON Full Backup:** A versioned envelope containing all tables, allowing full destructive restore on another device. **Note:** JSON backups include local unsynced image blobs. Synced images are referenced by cloud storage paths and require Supabase Storage availability (they are not embedded in the JSON).
 - **CSV & Excel Export:** Read-only snapshots intended for printing or sharing (does not include internal sync tables or file blobs).
 - **Restore Safety:** Restoring from JSON requires explicit confirmation as it completely replaces the current local database.
 - **Privacy Warning:** Backups contain PII. Users are warned to store exported files securely.

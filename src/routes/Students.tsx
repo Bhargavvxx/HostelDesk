@@ -142,7 +142,10 @@ export default function Students() {
       }
 
       // 3. Room filter
-      if (roomFilter && s.room_id !== roomFilter) return false
+      if (roomFilter) {
+        if (roomFilter === "none" && s.room_id !== null) return false
+        if (roomFilter !== "none" && s.room_id !== roomFilter) return false
+      }
 
       return true
     })
