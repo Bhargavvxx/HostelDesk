@@ -87,7 +87,7 @@ Supabase provides the Postgres database, Auth, and object Storage. Row-Level Sec
 - Enforces a strict one-open-log-per-student rule.
 
 ### Backup / Export
-- **JSON Full Backup:** Download a complete snapshot of the database (including Base64 images) for safekeeping or manual migration.
+- **JSON Full Backup:** Download a complete snapshot of local database records for safekeeping or manual migration. Local unsynced image blobs are embedded as Base64 when present. Already-synced images are stored as Supabase Storage cloud paths and are not embedded in the JSON file.
 - **CSV / Excel Export:** Download human-readable reports of all domain tables.
 
 ### Sync / Conflict Management
@@ -114,7 +114,7 @@ Supabase provides the Postgres database, Auth, and object Storage. Row-Level Sec
 
 ## Security & Privacy Notes
 - The database uses local device storage (IndexedDB).
-- The Local PIN is hashed using SHA-256; the raw PIN is never stored.
+- The Local PIN is hashed using PBKDF2-HMAC-SHA256 with 100,000 iterations; the raw PIN is never stored.
 - Supabase RLS guarantees cloud isolation between user accounts.
 - Private Storage Buckets ensure images are accessible only via short-lived signed URLs.
 
