@@ -195,4 +195,4 @@ The app uses `vite-plugin-pwa` (Workbox) to generate a service worker. When buil
 - Automated monthly fee generation.
 
 ## License
-[Placeholder for License - e.g., MIT License]
+[MIT License]
