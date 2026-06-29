@@ -10,6 +10,7 @@ import Attendance from "@/routes/Attendance"
 import Fees from "@/routes/Fees"
 import More from "@/routes/More"
 import Rooms from "@/routes/Rooms"
+import Backup from "@/routes/Backup"
 import Login from "@/routes/Login"
 import Lock from "@/routes/Lock"
 import { supabase } from "@/cloud/supabase"
@@ -164,6 +165,7 @@ export default function App() {
               <Route path="/fees" element={<Fees />} />
               <Route path="/more" element={<More />} />
               <Route path="/rooms" element={<Rooms />} />
+              <Route path="/backup" element={<Backup />} />
             </Route>
           </Routes>
         </BrowserRouter>
